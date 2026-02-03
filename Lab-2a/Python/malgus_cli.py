@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MALGUS CLI — Ops/Sec Automation Toolkit
-Chewbacca = Terraform (builds the world)
+Chrisbarm = Terraform (builds the world)
 Darth Malgus = Python (controls the battlefield)
 
 Reason why Darth Malgus would be pleased with this script.
