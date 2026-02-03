@@ -369,3 +369,60 @@ This is mid-level cloud engineer capability.
 All scripts ready. All documentation ready. Incident response framework ready.
 
 Next: Run an incident.
+
+---
+
+## Execution Log — Scenario Runs (All in Order)
+
+### Scenario A — Credential Drift
+**Inject Output (summary):**
+- Secret updated in Secrets Manager
+- Incident state saved to `incident_state_option_a.json`
+
+**Runbook Output (key points):**
+- Alarm state: OK (expected ALARM)
+- No error logs found
+- Parameter Store retrieval failed
+- Secrets Manager retrieval succeeded
+- Classification unclear
+
+**Recovery Output:**
+- RDS password updated successfully
+- RDS returned to available
+
+### Scenario B — Network Isolation
+**Inject Output (summary):**
+- RDS SG port 3306 rules revoked
+- Incident state saved to `incident_state_option_b.json`
+
+**Runbook Output (key points):**
+- Alarm state: OK (expected ALARM)
+- No error logs found
+- Parameter Store retrieval failed
+- Secrets Manager retrieval succeeded
+- Classification unclear
+
+**Recovery Output:**
+- Restored port 3306 SG rules from `incident_state_option_b.json`
+- RDS SG now has both expected inbound SG rules
+
+### Scenario C — Database Interruption
+**Inject Output (summary):**
+- RDS stop initiated and completed
+- Incident state saved to `incident_state_option_c.json`
+
+**Runbook Output (key points):**
+- Alarm state: OK (expected ALARM)
+- No error logs found
+- Parameter Store retrieval failed
+- Secrets Manager retrieval succeeded
+- Classification unclear
+
+**Recovery Output:**
+- RDS start initiated and completed
+- RDS status verified as available
+
+### Notes
+- CloudWatch alarm stayed in OK during runs.
+- Log group showed no ERROR entries at time of checks.
+- Parameter Store retrieval failed in runbook for all scenarios.

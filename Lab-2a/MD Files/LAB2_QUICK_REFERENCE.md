@@ -43,7 +43,7 @@ Apply complete! Resources added:
 
 # Test it:
 ALB_DNS=$(aws elbv2 describe-load-balancers \
-  --query 'LoadBalancers[?LoadBalancerName==`chewbacca-alb01`].DNSName' \
+  --query 'LoadBalancers[?LoadBalancerName==`chrisbarm-alb01`].DNSName' \
   --output text)
 
 curl https://$ALB_DNS
@@ -58,10 +58,10 @@ curl https://$ALB_DNS
 # Why: Blocks attackers who spoof CloudFront IPs
 
 # Test it:
-curl -H "X-Chewbacca-Growl: wrong-secret" https://$ALB_DNS
+curl -H "X-Chrisbarm-Growl: wrong-secret" https://$ALB_DNS
 # Expected: 403 Forbidden
 
-curl -H "X-Chewbacca-Growl: correct-secret" https://$ALB_DNS
+curl -H "X-Chrisbarm-Growl: correct-secret" https://$ALB_DNS
 # Expected: 200 OK (or app response)
 ```
 
@@ -108,11 +108,11 @@ curl http://$ALB_DNS  # HTTP
 
 ```bash
 # 1. CloudFront domain resolves
-dig chewbacca-growl.com A +short
+dig chrisbdevsecops.com A +short
 # Expected: CloudFront anycast IP (changes frequently)
 
 # 2. CloudFront accessible
-curl -I https://chewbacca-growl.com
+curl -I https://chrisbdevsecops.com
 # Expected: 200 OK
 
 # 3. Direct ALB blocked
@@ -125,7 +125,7 @@ aws wafv2 list-web-acls --scope CLOUDFRONT --query 'WebACLs[*].Name'
 
 # 5. Distribution has custom header
 aws cloudfront get-distribution-config --id $DIST_ID | grep -i growl
-# Expected: "X-Chewbacca-Growl" present
+# Expected: "X-Chrisbarm-Growl" present
 ```
 
 ### Full Verification (5 minutes)
@@ -136,7 +136,7 @@ bash verify_lab2_complete.sh
 
 # Expected output:
 # ✓ TEST 1: Direct ALB access should fail (403)
-# ✓ TEST 2: CloudFront access should succeed (200)
+# Expected: chrisbdevsecops.com and *.chrisbdevsecops.com
 # ✓ TEST 3: DNS should point to CloudFront (not ALB)
 # ✓ TEST 4: WAF scope should be CLOUDFRONT
 # ✓ TEST 5: Origin header validation works
@@ -161,7 +161,7 @@ variable "route53_zone_id" {
 }
 
 variable "domain_name" {
-  description = "Domain name (e.g., chewbacca-growl.com)"
+  description = "Domain name (e.g., chrisbdevsecops.com)"
   type        = string
 }
 
@@ -177,7 +177,7 @@ variable "app_subdomain" {
 ```hcl
 cloudfront_acm_cert_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
 route53_zone_id         = "Z1234567890ABC"
-domain_name             = "chewbacca-growl.com"
+domain_name             = "chrisbdevsecops.com"
 app_subdomain           = "app"
 ```
 
@@ -193,7 +193,7 @@ app_subdomain           = "app"
 
 # 1. Verify SG rule exists
 aws ec2 describe-security-groups \
-  --filters "Name=group-name,Values=chewbacca-alb-sg01" \
+  --filters "Name=group-name,Values=chrisbarm-alb-sg01" \
   --query 'SecurityGroups[0].IpPermissions' | grep cloudfront
 
 # Expected: CloudFront prefix list ID present
@@ -201,7 +201,7 @@ aws ec2 describe-security-groups \
 # 2. Verify custom header is set
 aws cloudfront get-distribution-config --id $DIST_ID | grep -i "customheader" -A 2
 
-# Expected: X-Chewbacca-Growl header present
+# Expected: X-Chrisbarm-Growl header present
 
 # 3. Check ALB listener rule
 aws elbv2 describe-listener-rules \
@@ -220,7 +220,7 @@ aws elbv2 describe-listener-rules \
 # 1. Check Route53 record
 aws route53 list-resource-record-sets \
   --hosted-zone-id $ZONE_ID \
-  --query "ResourceRecordSets[?Name=='chewbacca-growl.com.']"
+  --query "ResourceRecordSets[?Name=='chrisbdevsecops.com.']"
 
 # Expected: Alias record pointing to CloudFront
 
@@ -229,7 +229,7 @@ aws route53 list-resource-record-sets \
 
 # 3. Wait for DNS propagation (up to 5 minutes)
 for i in {1..12}; do
-  dig chewbacca-growl.com A +short
+  dig chrisbdevsecops.com A +short
   sleep 10
 done
 ```
@@ -254,7 +254,7 @@ aws acm describe-certificate \
   --region us-east-1 \
   --query 'Certificate.DomainValidationOptions[*].DomainName'
 
-# Expected: chewbacca-growl.com and *.chewbacca-growl.com
+# Expected: chrisbdevsecops.com and *.chrisbdevsecops.com
 
 # 3. If not validated, complete DNS validation
 aws acm describe-certificate \
@@ -298,7 +298,7 @@ terraform apply -var="waf_default_action=count"  # Log instead of block
 
 ```bash
 DIST_ID=$(aws cloudfront list-distributions \
-  --query 'DistributionList.Items[?Aliases.Items[0]==`chewbacca-growl.com`].Id' \
+  --query 'DistributionList.Items[?Aliases.Items[0]==`chrisbdevsecops.com`].Id' \
   --output text)
 echo $DIST_ID
 ```
@@ -307,7 +307,7 @@ echo $DIST_ID
 
 ```bash
 ALB_DNS=$(aws elbv2 describe-load-balancers \
-  --query 'LoadBalancers[?LoadBalancerName==`chewbacca-alb01`].DNSName' \
+  --query 'LoadBalancers[?LoadBalancerName==`chrisbarm-alb01`].DNSName' \
   --output text)
 echo $ALB_DNS
 ```
@@ -316,7 +316,7 @@ echo $ALB_DNS
 
 ```bash
 # This is stored in Terraform state (secrets.tfstate)
-terraform state show aws_random_password.chewbacca_origin_header_value01 \
+terraform state show aws_random_password.chrisbarm_origin_header_value01 \
   | grep result
 ```
 
@@ -324,7 +324,7 @@ terraform state show aws_random_password.chewbacca_origin_header_value01 \
 
 ```bash
 ZONE_ID=$(aws route53 list-hosted-zones-by-name \
-  --query 'HostedZones[?Name==`chewbacca-growl.com.`].Id' \
+  --query 'HostedZones[?Name==`chrisbdevsecops.com.`].Id' \
   --output text | cut -d'/' -f3)
 echo $ZONE_ID
 ```
@@ -347,7 +347,7 @@ aws cloudfront get-invalidation --distribution-id $DIST_ID --id $INVALIDATION_ID
 
 ### Q: "How do you prevent direct ALB access?"
 
-A: "We use a managed prefix list from AWS that contains all CloudFront IP ranges. We add a security group rule that only allows HTTPS inbound from that prefix list. Additionally, CloudFront sends a custom 32-character header (X-Chewbacca-Growl) that the ALB validates. If either check fails, the ALB returns 403. This is defense-in-depth—even if an attacker spoofs a CloudFront IP, they won't have the secret header."
+A: "We use a managed prefix list from AWS that contains all CloudFront IP ranges. We add a security group rule that only allows HTTPS inbound from that prefix list. Additionally, CloudFront sends a custom 32-character header (X-Chrisbarm-Growl) that the ALB validates. If either check fails, the ALB returns 403. This is defense-in-depth—even if an attacker spoofs a CloudFront IP, they won't have the secret header."
 
 ### Q: "Why move WAF from ALB to CloudFront?"
 
@@ -417,7 +417,7 @@ Viewer → Route53 → CloudFront (origin cloaking)
 
 ## ✨ Success Criteria
 
-- ✅ Internet users access via `chewbacca-growl.com` (Route53 → CloudFront)
+- ✅ Internet users access via `chrisbdevsecops.com` (Route53 → CloudFront)
 - ✅ Direct ALB access blocked (returns 403 or times out)
 - ✅ WAF applied at CloudFront edge (CLOUDFRONT scope, not regional)
 - ✅ All traffic encrypted (HTTPS only)

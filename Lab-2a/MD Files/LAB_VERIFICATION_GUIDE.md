@@ -21,9 +21,9 @@ Your EC2 → RDS infrastructure is **DEPLOYED AND CONFIGURED**. This document pr
 
 ### 2. Compute Layer
 - **EC2 Instance**: `chrisbarm-ec2_01`
-  - Instance ID: `i-061b663d2d9d6ff80`
+  - Instance ID: `i-0d24fcd824ddbdd0c`
   - Instance Type: `t3.micro`
-  - Public IP: `54.91.122.42`
+  - Public IP: `3.90.247.198`
   - Subnet: Public (us-east-1a)
   - AMI: Ubuntu 22.04 LTS
   - IAM Role: `chrisbarm-ec2-role01` (with Secrets Manager access)
@@ -94,9 +94,9 @@ aws ec2 describe-instances \
 ```
 [
     [
-        "i-061b663d2d9d6ff80",
+        "i-0d24fcd824ddbdd0c",
         "running",
-        "54.91.122.42"
+        "3.90.247.198"
     ]
 ]
 ```
@@ -110,7 +110,7 @@ aws ec2 describe-instances \
 ```bash
 # Get IAM instance profile
 aws ec2 describe-instances \
-  --instance-ids i-061b663d2d9d6ff80 \
+  --instance-ids i-0d24fcd824ddbdd0c \
   --region us-east-1 \
   --query "Reservations[].Instances[].IamInstanceProfile.Arn"
 ```
@@ -190,15 +190,20 @@ aws ec2 describe-security-groups \
         "ToPort": 3306,
         "UserIdGroupPairs": [
             {
-                "GroupId": "sg-0fa563fc7b978c1ce",
-                "Description": null
+              "UserId": "198547498722",
+              "GroupId": "sg-09ab009d3d15bf0b1"
+            },
+            {
+              "Description": "MySQL from Bonus-A EC2",
+              "UserId": "198547498722",
+              "GroupId": "sg-0f7829ad38af69ff6"
             }
         ]
     }
 ]
 ```
 
-**Status**: ✅ **PASS** - Port 3306 (MySQL) allows ONLY from EC2 security group (sg-0fa563fc7b978c1ce)
+**Status**: ✅ **PASS** - Port 3306 (MySQL) allows ONLY from EC2 security group (sg-09ab009d3d15bf0b1)
 
 **What this proves**:
 - RDS is NOT open to 0.0.0.0/0 (the internet)
@@ -215,7 +220,7 @@ aws ec2 describe-security-groups \
 
 ```bash
 # SSH/Connect to EC2 using Systems Manager (no key needed)
-aws ssm start-session --target i-061b663d2d9d6ff80 --region us-east-1
+aws ssm start-session --target i-0d24fcd824ddbdd0c --region us-east-1
 
 # Once connected, verify Secrets Manager access
 aws secretsmanager get-secret-value \
@@ -311,7 +316,7 @@ The Flask application exposes these endpoints:
 
 ```bash
 # Initialize database schema
-curl -X POST http://54.91.122.42/init
+curl -X POST http://3.90.247.198/init
 
 # Expected response:
 # {"status":"success","message":"Database initialized"}
@@ -321,7 +326,7 @@ curl -X POST http://54.91.122.42/init
 
 ```bash
 # Add a note to the database
-curl "http://54.91.122.42/add?note=cloud_labs_are_real"
+curl "http://3.90.247.198/add?note=cloud_labs_are_real"
 
 # Expected response:
 # {"status":"success","message":"Note added"}
@@ -331,7 +336,7 @@ curl "http://54.91.122.42/add?note=cloud_labs_are_real"
 
 ```bash
 # Retrieve all notes from database
-curl http://54.91.122.42/list
+curl http://3.90.247.198/list
 
 # Expected response:
 # {"status":"success","notes":[{"id":1,"note":"cloud_labs_are_real","created_at":"2026-01-20 10:15:42"}]}
@@ -341,7 +346,7 @@ curl http://54.91.122.42/list
 
 ```bash
 # Call /list again - notes should persist across requests
-curl http://54.91.122.42/list
+curl http://3.90.247.198/list
 
 # Same data should be returned - proves data survives application restart
 ```

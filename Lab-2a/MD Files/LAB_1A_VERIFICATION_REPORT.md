@@ -1,6 +1,6 @@
 # Lab 1a Verification Summary
 
-## Status: ⚠️ PARTIAL PASS - Network Configuration Issue
+## Status: ✅ PASS - All Gates Passed
 
 ### Test Results
 
@@ -10,93 +10,64 @@
 - **Secrets Manager Secret**: ✅ Exists (`lab1a/rds/mysql`)
 - **Secret Credentials**: ✅ Contains all required fields (username, password, host, port, dbname)
 
-#### ⚠️ Gate 2: Network & Database (PARTIAL - SG-to-SG Rule Missing)
-- **RDS Instance**: ✅ Exists (`lab-mysql`)
+#### ✅ Gate 2: Network & Database (PASSED)
+- **RDS Instance**: ✅ Exists (`chrisbarm-rds01`)
 - **RDS Public Accessible**: ✅ False (Correct - private only)
-- **RDS Has Security Group**: ✅ Yes (`sg-0d7a512e8a1c661eb`, `sg-0b45a1fd3bc4f0a5a`)
-- **SG-to-SG Rule**: ❌ Missing - RDS SG does not allow traffic from EC2 SG (`sg-0059285ecdea5d41d`)
+- **RDS Has Security Group**: ✅ Yes (`sg-00c4a42158a0e217e`)
+- **SG-to-SG Rule**: ✅ Present - RDS SG allows traffic from EC2 SG (`sg-09ab009d3d15bf0b1`)
 
 ---
 
-## Issue: Missing Security Group-to-Security Group Rule
+## Issues
 
-The RDS instance was imported from an existing AWS deployment. The security group does not have an ingress rule allowing traffic from the EC2 instance's security group on port 3306 (MySQL).
-
-### Resolution Options:
-
-#### Option 1: Fix via AWS CLI (Immediate)
-```bash
-# Add ingress rule allowing EC2 SG to RDS SG on port 3306
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-0d7a512e8a1c661eb \
-  --protocol tcp \
-  --port 3306 \
-  --source-group sg-0059285ecdea5d41d \
-  --region us-east-1
-```
-
-#### Option 2: Fix via Terraform (Best Practice)
-Add this to `main.tf` after the RDS ingress rule definition:
-
-```terraform
-# Add ingress to the second RDS SG if needed
-resource "aws_vpc_security_group_ingress_rule" "chrisbarm_rds_sg_ingress_mysql_secondary" {
-  ip_protocol                  = local.tcp_protocol
-  security_group_id            = "sg-0b45a1fd3bc4f0a5a"  # Secondary RDS SG
-  from_port                    = local.db_port
-  to_port                      = local.db_port
-  referenced_security_group_id = aws_security_group.chrisbarm_ec2_sg01.id
-}
-```
+No issues detected. Security group-to-security group ingress is correctly configured for MySQL (3306).
 
 ---
 
 ## Deployment Verified
 
 ### Core Infrastructure ✅
-- **VPC**: `vpc-0f2ad42c2c13e8707`
-- **Public Subnets**: `subnet-07980d20b9d734df6`, `subnet-07acbd1c313b824c4`
-- **Private Subnets**: `subnet-05e04c5fac26bafd0`, `subnet-07581a35dd4d4594c`
-- **EC2 Instance**: `i-0968fd41f8aaa43eb` (running, with IAM role)
-- **RDS Instance**: `lab-mysql` (available, private only)
-- **NAT Gateway**: `nat-00d4debd197a49cb4`
-- **Internet Gateway**: `igw-0a46e992c5552bd08`
+- **VPC**: `vpc-02709f3087724afb0`
+- **Public Subnets**: `subnet-059a4f6df55900d1e`, `subnet-0c52f3069d876196a`
+- **Private Subnets**: `subnet-0b47335d57a04adb4`, `subnet-077730be5642ccea1`
+- **EC2 Instance**: `i-0d24fcd824ddbdd0c` (running, with IAM role)
+- **RDS Instance**: `chrisbarm-rds01` (available, private only)
+- **NAT Gateway**: `nat-03b7a903e34cd4c00`
+- **Internet Gateway**: `igw-0cdd533df42d0cf9f`
 
-### Security Configuration ✅ (Except SG Rule)
+### Security Configuration ✅
 - **EC2 IAM Role**: ✅ Has Secrets Manager access
 - **Secret Storage**: ✅ Credentials secured in Secrets Manager
 - **RDS Privacy**: ✅ Not publicly accessible
 - **Network Isolation**: ✅ EC2 in public subnet, RDS in private subnets
+- **SG-to-SG Rule**: ✅ EC2 SG `sg-09ab009d3d15bf0b1` → RDS SG `sg-00c4a42158a0e217e` on 3306
 
 ---
 
 ## Next Steps
 
-1. **Fix the SG-to-SG rule** using Option 1 or Option 2 above
-2. **Re-run verification**:
+No further action required. If you want to re-run verification:
 ```bash
 chmod +x run_all_gates.sh
 REGION=us-east-1 \
-INSTANCE_ID=i-0968fd41f8aaa43eb \
+INSTANCE_ID=i-0d24fcd824ddbdd0c \
 SECRET_ID=lab1a/rds/mysql \
-DB_ID=lab-mysql \
+DB_ID=chrisbarm-rds01 \
 ./run_all_gates.sh
 ```
 
-3. **Verify EC2-to-RDS connectivity** (after fixing SG rule):
+Optional connectivity check:
 ```bash
 # SSH into EC2 and test
-aws ssm start-session --target i-0968fd41f8aaa43eb --region us-east-1
+aws ssm start-session --target i-0d24fcd824ddbdd0c --region us-east-1
 # Inside EC2:
-mysql -h lab-mysql.c4x68420cyvy.us-east-1.rds.amazonaws.com -u admin -p
+mysql -h chrisbarm-rds01.c4x68420cyvy.us-east-1.rds.amazonaws.com -u admin -p
 ```
 
 ---
 
 ## Summary
 
-**Exit Code**: 2 (Requires Fix)  
-**Ready to Grade**: No  
-**Action Required**: Add SG-to-SG ingress rule to allow EC2 → RDS communication
-
-Once the SG rule is added, re-run the verification suite for full pass (exit code 0).
+**Exit Code**: 0 (All gates passed)  
+**Ready to Grade**: Yes  
+**Action Required**: None

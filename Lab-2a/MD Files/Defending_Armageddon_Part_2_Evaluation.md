@@ -367,7 +367,7 @@ resource "aws_security_group_rule" "alb_ingress_from_cf" {
 ```terraform
 # CloudFront adds secret header to all origin requests
 custom_header {
-  name  = "X-Chewbacca-Growl"
+  name  = "X-Chrisbarm-Growl"
   value = random_password.secret_origin_value.result  # 32-char random string
 }
 
@@ -375,7 +375,7 @@ custom_header {
 resource "aws_lb_listener_rule" "require_header" {
   condition {
     http_header {
-      http_header_name = "X-Chewbacca-Growl"
+      http_header_name = "X-Chrisbarm-Growl"
       values           = [random_password.secret_origin_value.result]
     }
   }
@@ -644,7 +644,7 @@ curl https://alb.internal.elb.amazonaws.com
 # Expected: Connection refused (no public IP) or timeout (SG rule blocks)
 
 # Test 2: CloudFront access should succeed
-curl https://app.chewbacca-growl.com
+curl https://app.chrisbdevsecops.com
 # Expected: 200 OK (CloudFront request includes custom header)
 
 # Test 3: Spoofed CloudFront IP without header should fail

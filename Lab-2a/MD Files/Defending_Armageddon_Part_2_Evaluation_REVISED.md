@@ -678,7 +678,7 @@ resource "aws_cloudfront_distribution" "main" {
     
     # Add secret header to all origin requests
     custom_header {
-      name  = "X-Chewbacca-Growl"
+      name  = "X-Chrisbarm-Growl"
       value = random_password.secret_value.result  # 32-char random
     }
   }
@@ -773,7 +773,7 @@ resource "aws_lb_listener_rule" "require_secret_header" {
   
   condition {
     http_header {
-      http_header_name = "X-Chewbacca-Growl"
+      http_header_name = "X-Chrisbarm-Growl"
       values           = [random_password.secret_origin_value.result]
     }
   }
@@ -867,7 +867,7 @@ resource "aws_wafv2_web_acl" "cloudfront_waf" {
 ```terraform
 resource "aws_route53_record" "apex" {
   zone_id = aws_route53_zone.main.zone_id
-  name    = "chewbacca-growl.com"
+  name    = "chrisbdevsecops.com"
   type    = "A"
   
   alias {
@@ -878,7 +878,7 @@ resource "aws_route53_record" "apex" {
 }
 
 # Points domain to CloudFront, not ALB
-# Users see: chewbacca-growl.com → CloudFront
+# Users see: chrisbdevsecops.com → CloudFront
 # Attackers trying to find origin: ❌ only see CloudFront IP
 ```
 
