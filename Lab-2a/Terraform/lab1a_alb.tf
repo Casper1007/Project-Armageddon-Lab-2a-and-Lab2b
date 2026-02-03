@@ -14,6 +14,25 @@ resource "aws_security_group" "chrisbarm_alb_sg01" {
   }
 }
 
+# Allow inbound HTTP (port 80)
+resource "aws_security_group_rule" "chrisbarm_alb_ingress_http01" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.chrisbarm_alb_sg01.id
+}
+
+# Allow inbound HTTPS (port 443)
+resource "aws_security_group_rule" "chrisbarm_alb_ingress_https01" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.chrisbarm_alb_sg01.id
+}
 
 # Allow outbound to EC2 security group (port 80 for application)
 resource "aws_security_group_rule" "chrisbarm_alb_egress_to_ec2_01" {
@@ -79,41 +98,16 @@ resource "aws_lb_target_group_attachment" "chrisbarm_ec2_attachment01" {
   port             = 80
 }
 
-# HTTP Listener - redirect to HTTPS
+# HTTP Listener - forward directly to target group
 resource "aws_lb_listener" "chrisbarm_http_listener01" {
   load_balancer_arn = aws_lb.chrisbarm_alb01.arn
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.chrisbarm_tg01.arn
   }
-}
-
-# HTTPS Listener - required for CloudFront origin HTTPS
-resource "aws_lb_listener" "chrisbarm_https_listener01" {
-  load_balancer_arn = aws_lb.chrisbarm_alb01.arn
-  port              = 443
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = aws_acm_certificate.chrisbarm_cert01.arn
-
-  default_action {
-    type = "fixed-response"
-    fixed_response {
-      content_type = "text/plain"
-      message_body = "Forbidden"
-      status_code  = "403"
-    }
-  }
-
-  depends_on = [aws_acm_certificate_validation.chrisbarm_cert_validation01]
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════

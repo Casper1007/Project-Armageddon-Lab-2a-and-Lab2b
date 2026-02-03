@@ -95,20 +95,30 @@ variable "sns_email_endpoint" {
   default     = "student@example.com" # TODO: student supplies
 }
 
-variable "route53_zone_id" {
-  description = "Z0975220SJ1BK9DTNT7A"
+variable "cloudfront_acm_cert_arn" {
+  description = "ACM certificate ARN in us-east-1 for CloudFront"
   type        = string
-  default     = "chrisbdevsecops.com"
+}
+
+variable "route53_zone_id" {
+  description = "Route53 hosted zone ID"
+  type        = string
 }
 
 variable "domain_name" {
-  description = "Apex domain name for CloudFront (e.g., chewbacca-growl.com)."
+  description = "Domain name (e.g., chrisbdevsecops.com)"
   type        = string
   default     = "chrisbdevsecops.com"
 }
 
 variable "app_subdomain" {
-  description = "Subdomain for the app (e.g., app)."
+  description = "App subdomain prefix (e.g., app)"
   type        = string
   default     = "app"
+}
+
+variable "cloudfront_web_acl_arn" {
+  description = "Optional WAFv2 Web ACL ARN for CloudFront (CLOUDFRONT scope)."
+  type        = string
+  default     = null
 }
